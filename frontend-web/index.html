@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Game Master</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎲 AI Game Master</h1>
+            <div class="connection-status">
+                <span id="status-indicator" class="status-offline">●</span>
+                <span id="status-text">Disconnected</span>
+                <button id="connect-btn" class="btn btn-primary">Connect to Server</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="game-area">
+                <!-- Game Story Display -->
+                <section class="story-section">
+                    <h2>Game Story</h2>
+                    <div id="story-display" class="story-display">
+                        <p class="welcome-message">Welcome to the AI Game Master! Click "Connect to Server" to begin your adventure.</p>
+                    </div>
+                </section>
+
+                <!-- Choice Buttons -->
+                <section class="choices-section">
+                    <h2>Your Choices</h2>
+                    <div id="choice-buttons" class="choice-buttons">
+                        <button class="choice-btn" disabled>Choice 1</button>
+                        <button class="choice-btn" disabled>Choice 2</button>
+                        <button class="choice-btn" disabled>Choice 3</button>
+                        <button class="choice-btn" disabled>Choice 4</button>
+                    </div>
+                </section>
+
+                <!-- Custom Action Input -->
+                <section class="custom-action-section">
+                    <h2>Custom Action</h2>
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="custom-action-input" 
+                            placeholder="Enter your action or question..." 
+                            disabled
+                        >
+                        <button id="submit-action-btn" class="btn btn-secondary" disabled>Submit Action</button>
+                    </div>
+                </section>
+
+                <!-- Scene Generation -->
+                <section class="scene-generation-section">
+                    <h2>Generate New Scene</h2>
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="scene-prompt-input" 
+                            placeholder="Describe the scene you want to generate..." 
+                            disabled
+                        >
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="include-dice-checkbox" disabled>
+                            Include Dice Rolls
+                        </label>
+                        <button id="generate-scene-btn" class="btn btn-secondary" disabled>Generate Scene</button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <!-- Dice Roll History -->
+                <section class="dice-history-section">
+                    <h2>🎲 Dice Roll History</h2>
+                    <div id="dice-history" class="dice-history">
+                        <p class="empty-message">No dice rolls yet</p>
+                    </div>
+                </section>
+
+                <!-- Game Stats -->
+                <section class="stats-section">
+                    <h2>Game Stats</h2>
+                    <div id="game-stats" class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Scenes Generated:</span>
+                            <span id="scenes-count" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Actions Taken:</span>
+                            <span id="actions-count" class="stat-value">0</span>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
