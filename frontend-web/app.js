@@ -1,6 +1,7 @@
 const API_BASE_URL = 'http://localhost:8000';
-let isConnected = false, scenesGenerated = 0, actionsTaken = 0, currentStoryContext = '', startingSceneGenerated = false;
+let isConnected = false, scenesGenerated = 0, actionsTaken = 0, startingSceneGenerated = false;
 
+// DOM Elements
 const connectBtn = document.getElementById('connect-btn'), 
       storyDisplay = document.getElementById('story-display'),
       choiceButtons = document.querySelectorAll('.choice-btn'),
@@ -23,6 +24,7 @@ function setupEventListeners() {
     choiceButtons.forEach((btn, i) => btn.onclick = () => handleChoice(i + 1));
 }
 
+// FIX: Ensures inputs are unlocked after AI finishes
 function enableControls() {
     [customActionInput, submitActionBtn, scenePromptInput, generateSceneBtn].forEach(el => el.disabled = false);
     choiceButtons.forEach(btn => btn.disabled = false);
@@ -41,17 +43,23 @@ async function checkServerConnection() {
             enableControls();
             if (!startingSceneGenerated) generateStartingScene();
         }
-    } catch { isConnected = false; }
+    } catch { 
+        isConnected = false; 
+        console.log("Waiting for server...");
+    }
 }
 
 async function handleConnect() {
+    connectBtn.textContent = 'Connecting...';
     await checkServerConnection();
+    if(isConnected) connectBtn.textContent = 'Connected';
 }
 
 function addToStory(text, type = 'game') {
     if (!text) return;
     const p = document.createElement('p');
     p.className = type;
+    // Highlight bold text from AI markdown
     p.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); 
     storyDisplay.appendChild(p);
     storyDisplay.scrollTop = storyDisplay.scrollHeight;
@@ -96,21 +104,24 @@ async function sendToAI(prompt) {
         const data = await res.json();
         
         if (data.success) {
-            // 1. Put choices on buttons
+            // 1. UPDATE BUTTONS (Uses the full text)
             updateChoiceButtons(data.scene);
 
-            // 2. CLEANING LOGIC: Cut the text off BEFORE "Choice 1:"
-            const choiceIndex = data.scene.search(/Choice \d+:/i);
-            const cleanedStory = choiceIndex !== -1 
+            // 2. CLEANING LOGIC (Removes "Choice 1..." from the main window)
+            // Searches for "Choice 1" or "Choice 1:" case-insensitively
+            const choiceIndex = data.scene.search(/Choice\s*1/i);
+            
+            const displayContent = choiceIndex !== -1 
                 ? data.scene.substring(0, choiceIndex).trim() 
                 : data.scene.trim();
 
-            // 3. Only show the cleaned narrative in the window
-            addToStory(cleanedStory, 'game');
+            // 3. Only add narrative text to the story window
+            addToStory(displayContent, 'game');
         }
     } catch (e) { 
         addToStory("Error contacting AI.", "system"); 
     } finally {
+        // ALWAYS unlock controls even if the server fails
         enableControls();
     }
 }
@@ -118,14 +129,18 @@ async function sendToAI(prompt) {
 function updateChoiceButtons(text) {
     const choiceRegex = /Choice \d+:\s*(.*)/gi;
     let choices = [], match;
+    
     while ((match = choiceRegex.exec(text)) !== null) {
         choices.push(match[1].trim());
     }
 
     const fallbacks = ['Explore further', 'Search area', 'Rest', 'Continue'];
+    
     choiceButtons.forEach((btn, i) => {
         const raw = choices[i] || fallbacks[i];
+        // Truncate text for button visual (adds ...)
         btn.textContent = raw.length > 40 ? raw.substring(0, 37) + '...' : raw;
+        // Store full text in title for tooltips and game logic
         btn.title = raw;
     });
 }
