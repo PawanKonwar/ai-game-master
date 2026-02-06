@@ -1,8 +1,31 @@
+import sys
+import time
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from loguru import logger
 from pydantic import BaseModel
+
 from game_agent import game_master
+
+# Ensure logs directory exists for AI observability
+Path("logs").mkdir(exist_ok=True)
+
+# Configure Loguru for AI observability (structured, traceable logs)
+logger.add(
+    "logs/ai_observability_{time:YYYY-MM-DD}.log",
+    rotation="1 day",
+    retention="7 days",
+    level="INFO",
+    format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {message}",
+)
+logger.add(
+    sys.stderr,
+    level="INFO",
+    format="<green>{time:HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <level>{message}</level>",
+)
 
 app = FastAPI(title="AI Game Master API", version="1.0.0")
 
@@ -90,24 +113,48 @@ async def generate_scene(request: SceneRequest):
             status_code=400,
             detail="Prompt is required and cannot be empty"
         )
-    
+
+    request_id = f"scene_{int(time.time() * 1000)}"
+    t_start = time.perf_counter()
+
+    logger.info(
+        "llm_request_start | request_id={} | prompt_len={} | include_dice_rolls={}",
+        request_id,
+        len(request.prompt),
+        request.include_dice_rolls,
+    )
+
     try:
-        # Generate the scene using the game agent
+        # Generate the scene using the game agent (retrieval + LLM call inside)
         scene_text = game_master.generate_scene(
-            request.prompt, 
-            include_dice_rolls=request.include_dice_rolls
+            request.prompt,
+            include_dice_rolls=request.include_dice_rolls,
         )
-        
+
+        latency_ms = (time.perf_counter() - t_start) * 1000
+        logger.info(
+            "llm_request_complete | request_id={} | latency_ms={:.2f} | response_len={} | success=true",
+            request_id,
+            latency_ms,
+            len(scene_text),
+        )
+
         # Return the generated scene
         return JSONResponse(content={
             "success": True,
             "prompt": request.prompt,
             "include_dice_rolls": request.include_dice_rolls,
-            "scene": scene_text
+            "scene": scene_text,
         })
     except Exception as e:
-        # Handle any errors from the game agent
+        latency_ms = (time.perf_counter() - t_start) * 1000
+        logger.error(
+            "llm_request_failed | request_id={} | latency_ms={:.2f} | error={}",
+            request_id,
+            latency_ms,
+            str(e),
+        )
         raise HTTPException(
             status_code=500,
-            detail=f"Error generating scene: {str(e)}"
+            detail=f"Error generating scene: {str(e)}",
         )
