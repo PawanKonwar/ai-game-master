@@ -9,6 +9,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from game_agent import game_master
+from database import init_db, save_game, load_game, list_games
 
 # Ensure logs directory exists for AI observability
 Path("logs").mkdir(exist_ok=True)
@@ -43,6 +44,18 @@ class SceneRequest(BaseModel):
     """Request model for scene generation"""
     prompt: str
     include_dice_rolls: bool = False
+
+
+class SaveRequest(BaseModel):
+    """Request model for saving game state"""
+    session_name: str
+    story_log: str
+
+
+@app.on_event("startup")
+def startup():
+    """Initialize database on startup."""
+    init_db()
 
 
 @app.get("/")
@@ -158,3 +171,37 @@ async def generate_scene(request: SceneRequest):
             status_code=500,
             detail=f"Error generating scene: {str(e)}",
         )
+
+
+@app.post("/save")
+async def save_state(request: SaveRequest):
+    """Save the current story log to the database."""
+    if not request.session_name or not request.session_name.strip():
+        raise HTTPException(status_code=400, detail="session_name is required")
+    try:
+        row_id = save_game(
+            session_name=request.session_name.strip(),
+            story_log=request.story_log or "",
+        )
+        return JSONResponse(content={"success": True, "id": row_id})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/saves")
+async def list_saves():
+    """List all saved game states (id, session_name, timestamp) for the sidebar."""
+    try:
+        games = list_games()
+        return JSONResponse(content={"saves": games})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/load/{session_id}")
+async def load_state(session_id: int):
+    """Retrieve a specific saved game by id."""
+    state = load_game(session_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Save not found")
+    return JSONResponse(content=state)
