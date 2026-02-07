@@ -14,6 +14,7 @@
                 <span id="status-indicator" class="status-offline">●</span>
                 <span id="status-text">Disconnected</span>
                 <button id="connect-btn" class="btn btn-primary">Connect to Server</button>
+                <button id="save-game-btn" class="btn btn-secondary" disabled>Save Game</button>
             </div>
         </header>
 
@@ -52,6 +53,15 @@
                     </div>
                 </section>
 
+                <!-- Dice Roller -->
+                <section class="dice-roller-section">
+                    <h2>Dice Roller</h2>
+                    <div class="dice-roller-box">
+                        <button id="roll-d20-btn" class="btn btn-primary" disabled>Roll D20</button>
+                        <div id="dice-result" class="dice-result" aria-live="polite">—</div>
+                    </div>
+                </section>
+
                 <!-- Scene Generation -->
                 <section class="scene-generation-section">
                     <h2>Generate New Scene</h2>
@@ -73,6 +83,14 @@
 
             <!-- Sidebar -->
             <aside class="sidebar">
+                <!-- Previous Adventures -->
+                <section class="previous-adventures-section">
+                    <h2>📜 Previous Adventures</h2>
+                    <div id="previous-adventures" class="previous-adventures-list">
+                        <p class="empty-message">No saved games</p>
+                    </div>
+                </section>
+
                 <!-- Dice Roll History -->
                 <section class="dice-history-section">
                     <h2>🎲 Dice Roll History</h2>

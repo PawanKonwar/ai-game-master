@@ -76,7 +76,11 @@ async def test_scene():
     sample_scene = {
         "scene_id": "test_scene_001",
         "title": "The Mysterious Tavern",
-        "description": "You find yourself in a dimly lit tavern. The air is thick with the smell of ale and roasted meat. A mysterious figure sits in the corner, watching you intently.",
+        "description": (
+            "You find yourself in a dimly lit tavern. The air is thick with "
+            "the smell of ale and roasted meat. A mysterious figure sits in "
+            "the corner, watching you intently."
+        ),
         "characters": [
             {
                 "name": "Mysterious Stranger",
@@ -113,10 +117,10 @@ async def test_scene():
 async def generate_scene(request: SceneRequest):
     """
     Generate a game scene based on a prompt using the AI game master agent.
-    
+
     Args:
         request: JSON body containing a "prompt" field
-        
+
     Returns:
         JSON response with the generated scene
     """

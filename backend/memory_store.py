@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 from dotenv import load_dotenv
 import chromadb
 from chromadb.config import Settings
@@ -18,39 +18,39 @@ CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chroma_db")
 
 class GameMemoryStore:
     """ChromaDB-based persistent memory store for game sessions, NPCs, locations, and items."""
-    
+
     # Collection names
     COLLECTION_SESSIONS = "game_sessions"
     COLLECTION_NPCS = "npcs"
     COLLECTION_LOCATIONS = "locations"
     COLLECTION_ITEMS = "items"
-    
+
     def __init__(self, persist_directory: Optional[str] = None):
         """
         Initialize the game memory store with ChromaDB.
-        
+
         Args:
             persist_directory: Directory to persist ChromaDB data (defaults to CHROMA_PERSIST_DIR env var)
         """
         if not OPENAI_API_KEY:
             raise ValueError("OPENAI_API_KEY not found in environment variables. Please check your .env file.")
-        
+
         # Set up persist directory
         self.persist_directory = persist_directory or CHROMA_PERSIST_DIR
-        
+
         # Initialize OpenAI embeddings
         self.embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
-        
+
         # Initialize ChromaDB client with persistence
         self.client_settings = Settings(
             persist_directory=self.persist_directory,
             is_persistent=True
         )
         self.client = chromadb.Client(self.client_settings)
-        
+
         # Initialize vector stores for each collection
         self._init_collections()
-    
+
     def _init_collections(self):
         """Initialize or load vector stores for each collection."""
         self.sessions_store = Chroma(
@@ -59,30 +59,30 @@ class GameMemoryStore:
             persist_directory=self.persist_directory,
             client_settings=self.client_settings
         )
-        
+
         self.npcs_store = Chroma(
             collection_name=self.COLLECTION_NPCS,
             embedding_function=self.embeddings,
             persist_directory=self.persist_directory,
             client_settings=self.client_settings
         )
-        
+
         self.locations_store = Chroma(
             collection_name=self.COLLECTION_LOCATIONS,
             embedding_function=self.embeddings,
             persist_directory=self.persist_directory,
             client_settings=self.client_settings
         )
-        
+
         self.items_store = Chroma(
             collection_name=self.COLLECTION_ITEMS,
             embedding_function=self.embeddings,
             persist_directory=self.persist_directory,
             client_settings=self.client_settings
         )
-    
+
     # ========== Session Memory Functions ==========
-    
+
     def save_session_memory(
         self,
         session_id: str,
@@ -91,7 +91,7 @@ class GameMemoryStore:
     ) -> None:
         """
         Save a game session memory.
-        
+
         Args:
             session_id: Unique identifier for the session
             content: The content to store (e.g., scene description, player actions)
@@ -103,13 +103,13 @@ class GameMemoryStore:
             "session_id": session_id,
             "type": "session"
         })
-        
+
         self.sessions_store.add_texts(
             texts=[content],
             metadatas=[metadata],
             ids=[doc_id]
         )
-    
+
     def retrieve_session_memories(
         self,
         query: str,
@@ -118,12 +118,12 @@ class GameMemoryStore:
     ) -> List[Document]:
         """
         Retrieve relevant session memories using RAG.
-        
+
         Args:
             query: Search query
             session_id: Optional filter by session ID
             k: Number of results to return
-            
+
         Returns:
             List of relevant documents
         """
@@ -131,15 +131,15 @@ class GameMemoryStore:
         where_filter = None
         if session_id:
             where_filter = {"session_id": session_id}
-        
+
         retriever = self.sessions_store.as_retriever(
             search_kwargs={"k": k, "filter": where_filter} if where_filter else {"k": k}
         )
-        
+
         return retriever.get_relevant_documents(query)
-    
+
     # ========== NPC Memory Functions ==========
-    
+
     def save_npc_memory(
         self,
         npc_id: str,
@@ -149,7 +149,7 @@ class GameMemoryStore:
     ) -> None:
         """
         Save an NPC memory.
-        
+
         Args:
             npc_id: Unique identifier for the NPC
             npc_name: Name of the NPC
@@ -163,13 +163,13 @@ class GameMemoryStore:
             "npc_name": npc_name,
             "type": "npc"
         })
-        
+
         self.npcs_store.add_texts(
             texts=[content],
             metadatas=[metadata],
             ids=[doc_id]
         )
-    
+
     def retrieve_npc_memories(
         self,
         query: str,
@@ -179,13 +179,13 @@ class GameMemoryStore:
     ) -> List[Document]:
         """
         Retrieve relevant NPC memories using RAG.
-        
+
         Args:
             query: Search query
             npc_id: Optional filter by NPC ID
             npc_name: Optional filter by NPC name
             k: Number of results to return
-            
+
         Returns:
             List of relevant documents
         """
@@ -194,15 +194,15 @@ class GameMemoryStore:
             where_filter = {"npc_id": npc_id}
         elif npc_name:
             where_filter = {"npc_name": npc_name}
-        
+
         retriever = self.npcs_store.as_retriever(
             search_kwargs={"k": k, "filter": where_filter} if where_filter else {"k": k}
         )
-        
+
         return retriever.get_relevant_documents(query)
-    
+
     # ========== Location Memory Functions ==========
-    
+
     def save_location_memory(
         self,
         location_id: str,
@@ -212,7 +212,7 @@ class GameMemoryStore:
     ) -> None:
         """
         Save a location memory.
-        
+
         Args:
             location_id: Unique identifier for the location
             location_name: Name of the location
@@ -226,13 +226,13 @@ class GameMemoryStore:
             "location_name": location_name,
             "type": "location"
         })
-        
+
         self.locations_store.add_texts(
             texts=[content],
             metadatas=[metadata],
             ids=[doc_id]
         )
-    
+
     def retrieve_location_memories(
         self,
         query: str,
@@ -242,13 +242,13 @@ class GameMemoryStore:
     ) -> List[Document]:
         """
         Retrieve relevant location memories using RAG.
-        
+
         Args:
             query: Search query
             location_id: Optional filter by location ID
             location_name: Optional filter by location name
             k: Number of results to return
-            
+
         Returns:
             List of relevant documents
         """
@@ -257,15 +257,15 @@ class GameMemoryStore:
             where_filter = {"location_id": location_id}
         elif location_name:
             where_filter = {"location_name": location_name}
-        
+
         retriever = self.locations_store.as_retriever(
             search_kwargs={"k": k, "filter": where_filter} if where_filter else {"k": k}
         )
-        
+
         return retriever.get_relevant_documents(query)
-    
+
     # ========== Item Memory Functions ==========
-    
+
     def save_item_memory(
         self,
         item_id: str,
@@ -275,7 +275,7 @@ class GameMemoryStore:
     ) -> None:
         """
         Save an item memory.
-        
+
         Args:
             item_id: Unique identifier for the item
             item_name: Name of the item
@@ -289,13 +289,13 @@ class GameMemoryStore:
             "item_name": item_name,
             "type": "item"
         })
-        
+
         self.items_store.add_texts(
             texts=[content],
             metadatas=[metadata],
             ids=[doc_id]
         )
-    
+
     def retrieve_item_memories(
         self,
         query: str,
@@ -305,13 +305,13 @@ class GameMemoryStore:
     ) -> List[Document]:
         """
         Retrieve relevant item memories using RAG.
-        
+
         Args:
             query: Search query
             item_id: Optional filter by item ID
             item_name: Optional filter by item name
             k: Number of results to return
-            
+
         Returns:
             List of relevant documents
         """
@@ -320,84 +320,84 @@ class GameMemoryStore:
             where_filter = {"item_id": item_id}
         elif item_name:
             where_filter = {"item_name": item_name}
-        
+
         retriever = self.items_store.as_retriever(
             search_kwargs={"k": k, "filter": where_filter} if where_filter else {"k": k}
         )
-        
+
         return retriever.get_relevant_documents(query)
-    
+
     # ========== RAG Integration Functions ==========
-    
+
     def get_session_retriever(self, k: int = 5) -> VectorStoreRetriever:
         """
         Get a LangChain retriever for session memories.
-        
+
         Args:
             k: Number of documents to retrieve
-            
+
         Returns:
             VectorStoreRetriever for sessions
         """
         return self.sessions_store.as_retriever(search_kwargs={"k": k})
-    
+
     def get_npc_retriever(self, k: int = 5) -> VectorStoreRetriever:
         """
         Get a LangChain retriever for NPC memories.
-        
+
         Args:
             k: Number of documents to retrieve
-            
+
         Returns:
             VectorStoreRetriever for NPCs
         """
         return self.npcs_store.as_retriever(search_kwargs={"k": k})
-    
+
     def get_location_retriever(self, k: int = 5) -> VectorStoreRetriever:
         """
         Get a LangChain retriever for location memories.
-        
+
         Args:
             k: Number of documents to retrieve
-            
+
         Returns:
             VectorStoreRetriever for locations
         """
         return self.locations_store.as_retriever(search_kwargs={"k": k})
-    
+
     def get_item_retriever(self, k: int = 5) -> VectorStoreRetriever:
         """
         Get a LangChain retriever for item memories.
-        
+
         Args:
             k: Number of documents to retrieve
-            
+
         Returns:
             VectorStoreRetriever for items
         """
         return self.items_store.as_retriever(search_kwargs={"k": k})
-    
+
     def get_combined_retriever(self, k: int = 5) -> VectorStoreRetriever:
         """
         Get a combined retriever that searches across all collections.
         Note: This creates a new temporary collection with all documents.
-        
+
         Args:
             k: Number of documents to retrieve
-            
+
         Returns:
             VectorStoreRetriever for all collections
         """
         # For simplicity, we'll use the sessions store as the base
         # In production, you might want to create a unified collection
         return self.sessions_store.as_retriever(search_kwargs={"k": k})
-    
+
     # ========== Utility Functions ==========
-    
+
     def clear_collection(self, collection_type: str) -> None:
         """
         Clear all data from a specific collection.
-        
+
         Args:
             collection_type: One of 'sessions', 'npcs', 'locations', 'items'
         """
@@ -415,11 +415,11 @@ class GameMemoryStore:
             self._init_collections()
         else:
             raise ValueError(f"Unknown collection type: {collection_type}")
-    
+
     def get_collection_stats(self) -> Dict[str, int]:
         """
         Get statistics about stored memories.
-        
+
         Returns:
             Dictionary with counts for each collection
         """
