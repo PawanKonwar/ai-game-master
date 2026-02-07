@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install lint and test tools
+        run: pip install flake8 pytest
+
+      - name: Lint with flake8
+        run: flake8 . --max-line-length=120 --extend-ignore=E203,W503
+        # E203: whitespace before ':' (conflicts with black); W503: line break before binary op
+
+      - name: Run tests
+        run: pytest -v --tb=short
+        # Exits 0 when no tests are found; fails the job when tests exist and one fails
