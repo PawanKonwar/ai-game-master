@@ -1,5 +1,7 @@
 # AI Game Master: A Full-Stack RAG-Powered RPG
 
+[![CI](https://github.com/PawanKonwar/ai-game-master/actions/workflows/main.yml/badge.svg)](https://github.com/PawanKonwar/ai-game-master/actions/workflows/main.yml)
+
 An AI-powered text adventure RPG where an intelligent game master creates immersive, interactive fantasy adventures using retrieval-augmented generation (RAG), OpenAI, and LangChain.
 
 ![AI Game Master](screenshot.png)
